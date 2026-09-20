@@ -1,0 +1,14 @@
+venv/
+.venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.log
+screenshots/*
+!screenshots/.gitkeep
+.idea/
+.vscode/
+*.swp
+*.swo

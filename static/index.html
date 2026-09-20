@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>⚡ MISSION CONTROL</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg: #0a0a0f;
+            --card: rgba(10, 15, 25, 0.9);
+            --border: rgba(0, 212, 255, 0.3);
+            --accent: #00d4ff;
+            --accent2: #00ff88;
+            --red: #ff3366;
+            --yellow: #ffcc00;
+            --orange: #ff6600;
+            --text: #e0e8ff;
+            --text2: #5a6a8a;
+            --glow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(0, 212, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(123, 44, 191, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 212, 255, 0.01) 2px,
+                rgba(0, 212, 255, 0.01) 4px
+            );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .grid-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5em;
+            font-weight: 900;
+            color: var(--accent);
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: var(--text2);
+            font-size: 0.9em;
+            letter-spacing: 2px;
+        }
+
+        .device-status {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red);
+        }
+
+        .status-dot.online {
+            background: var(--accent2);
+            box-shadow: 0 0 10px var(--accent2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.8); }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .panel-icon {
+            font-size: 1.8em;
+        }
+
+        .panel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .metric {
+            padding: 12px;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 212, 255, 0.1);
+        }
+
+        .metric-label {
+            font-size: 0.7em;
+            color: var(--text2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.4em;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .metric-value.highlight { color: var(--accent); }
+        .metric-value.warning { color: var(--yellow); }
+        .metric-value.danger { color: var(--red); }
+        .metric-value.success { color: var(--accent2); }
+
+        .big-metric {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        .big-metric .value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 4em;
+            font-weight: 900;
+            color: var(--accent);
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+            line-height: 1;
+        }
+
+        .big-metric .label {
+            font-size: 0.8em;
+            color: var(--text2);
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, var(--yellow), var(--orange));
+            box-shadow: 0 0 10px var(--yellow);
+        }
+
+        .progress-fill.danger {
+            background: linear-gradient(90deg, var(--orange), var(--red));
+            box-shadow: 0 0 10px var(--red);
+        }
+
+        .controls-panel {
+            grid-column: 1 / -1;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .ctrl-btn {
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ctrl-btn::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .ctrl-btn:hover::before { left: 100%; }
+
+        .ctrl-btn:hover {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: var(--glow);
+        }
+
+        .ctrl-btn:active { transform: scale(0.95); }
+
+        .ctrl-btn .icon { font-size: 2em; }
+        .ctrl-btn .label { font-size: 0.85em; }
+
+        .ctrl-btn.panic {
+            border-color: var(--red);
+            background: rgba(255, 51, 102, 0.1);
+        }
+
+        .ctrl-btn.panic:hover {
+            background: rgba(255, 51, 102, 0.2);
+            border-color: var(--red);
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.5);
+        }
+
+        .ctrl-btn.danger {
+            border-color: var(--orange);
+        }
+
+        .screenshot-preview {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .screenshot-preview.active { display: flex; }
+
+        .screenshot-preview img {
+            max-width: 90%;
+            max-height: 70vh;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+        }
+
+        .screenshot-preview .close-btn {
+            padding: 12px 30px;
+            background: var(--accent);
+            border: none;
+            border-radius: 8px;
+            color: var(--bg);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+
+        .volume-slider {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .volume-slider input[type="range"] {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(0, 212, 255, 0.2);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .volume-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .files-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .files-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .files-list::-webkit-scrollbar-track {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .files-list::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 3px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.05);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .file-item:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .file-item .icon { font-size: 1.2em; }
+        .file-item .name { flex: 1; font-size: 0.85em; }
+        .file-item .size { color: var(--text2); font-size: 0.75em; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text2);
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            padding: 15px 30px;
+            background: var(--card);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            font-family: 'Share Tech Mono', monospace;
+            z-index: 3000;
+            transition: transform 0.3s ease;
+            box-shadow: var(--glow);
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        .log-panel {
+            grid-column: 1 / -1;
+        }
+
+        .log-content {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8em;
+            color: var(--accent2);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.05);
+        }
+
+        .log-entry .time { color: var(--text2); }
+        .log-entry .msg { color: var(--accent2); }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.6em; }
+            .big-metric .value { font-size: 2.5em; }
+            .controls-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .blink {
+            animation: blink-anim 1s infinite;
+        }
+
+        @keyframes blink-anim {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanline"></div>
+    <div class="grid-bg"></div>
+
+    <div class="container">
+        <header class="header">
+            <h1>⚡ MISSION CONTROL</h1>
+            <div class="subtitle">PHONE OPERATIONS CENTER</div>
+            
+            <div class="device-status">
+                <div class="status-item">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="deviceStatus">INICIALIZANDO...</span>
+                </div>
+                <div class="status-item">
+                    <span>📱</span>
+                    <span id="deviceModel">--</span>
+                </div>
+                <div class="status-item">
+                    <span>🤖</span>
+                    <span id="deviceAndroid">--</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard">
+            <!-- Battery Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-icon">🔋</span>
+                    <span class="panel-title">ENERGIA</span>
+                </div>
+                <div class="big-metric">
+                    <div class="value" id="batteryLevel">--</div>
+                    <div class="label">Nível da Bateria</div>
+                </div>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-label">Status</div>
+                        <div class="metric-value" id="batteryStatus">--</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Temperatura</div>
+                        <div class="metric-value" id="batteryTemp">--</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="batteryProgress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Storage Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-icon">💾</span>
+                    <span class="panel-title">ARMAZENAMENTO</span>
+                </div>
+                <div class="metric-grid">
+                    <div class="metric">
+                        <div class="metric-label">Total</div>
+                        <div class="metric-value highlight" id="storageTotal">--</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Usado</div>
+                        <div class="metric-value warning" id="storageUsed">--</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Livre</div>
+                        <div class="metric-value success" id="storageFree">--</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Conexão</div>
+                        <div class="metric-value" id="connectionType">--</div>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="storageProgress" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Connection Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    <span class="panel-icon">📡</span>
+                    <span class="panel-title">REDE</span>
+                </div>
+                <div class="metric-grid">
+                    <div class="metric" style="grid-column: 1 / -1;">
+                        <div class="metric-label">IP Address</div>
+                        <div class="metric-value highlight" id="deviceIp">--</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Tipo</div>
+                        <div class="metric-value" id="connType2">--</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Status</div>
+                        <div class="metric-value success" id="connStatus">ONLINE</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="panel controls-panel">
+                <div class="panel-header">
+                    <span class="panel-icon">🎮</span>
+                    <span class="panel-title">CONTROLES</span>
+                </div>
+                <div class="controls-grid">
+                    <button class="ctrl-btn" onclick="takeScreenshot()">
+                        <span class="icon">📸</span>
+                        <span class="label">SCREENSHOT</span>
+                    </button>
+                    <button class="ctrl-btn" onclick="wakeDevice()">
+                        <span class="icon">☀️</span>
+                        <span class="label">LIGAR TELA</span>
+                    </button>
+                    <button class="ctrl-btn" onclick="sleepDevice()">
+                        <span class="icon">🌙</span>
+                        <span class="label">APAGAR TELA</span>
+                    </button>
+                    <button class="ctrl-btn" onclick="openFiles()">
+                        <span class="icon">📁</span>
+                        <span class="label">ARQUIVOS</span>
+                    </button>
+                    <button class="ctrl-btn" onclick="toggleMute()">
+                        <span class="icon">🔇</span>
+                        <span class="label">MUTE</span>
+                    </button>
+                    <button class="ctrl-btn" onclick="activatePanic()">
+                        <span class="icon">🚨</span>
+                        <span class="label">PANIC MODE</span>
+                    </button>
+                </div>
+
+                <div class="volume-slider">
+                    <div class="metric-label" style="margin-bottom: 10px;">🔊 CONTROLE DE VOLUME</div>
+                    <input type="range" min="0" max="15" value="10" id="volumeSlider" 
+                           onchange="setVolume(this.value)" oninput="updateVolumeLabel(this.value)">
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span class="metric-label">0</span>
+                        <span class="metric-label" id="volumeLabel">10</span>
+                        <span class="metric-label">15</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Files Panel -->
+            <div class="panel" id="filesPanel" style="display: none;">
+                <div class="panel-header">
+                    <span class="panel-icon">📂</span>
+                    <span class="panel-title">GERENCIADOR DE ARQUIVOS</span>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <button class="ctrl-btn" style="padding: 10px;" onclick="navigateFiles('/')">🏠 Raiz</button>
+                </div>
+                <div class="files-list" id="filesList">
+                    <div class="loading">Carregando</div>
+                </div>
+            </div>
+
+            <!-- Log Panel -->
+            <div class="panel log-panel">
+                <div class="panel-header">
+                    <span class="panel-icon">📜</span>
+                    <span class="panel-title">SYSTEM LOG</span>
+                </div>
+                <div class="log-content" id="logContent">
+                    <div class="log-entry">
+                        <span class="time">[SYSTEM]</span>
+                        <span class="msg"> Mission Control inicializado</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screenshot Preview -->
+    <div class="screenshot-preview" id="screenshotPreview">
+        <img id="screenshotImg" src="">
+        <div style="display: flex; gap: 10px;">
+            <button class="close-btn" onclick="closeScreenshot()">FECHAR</button>
+            <button class="close-btn" style="background: var(--accent2);" onclick="downloadScreenshot()">💾 SALVAR</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const API = '';
+        let currentPath = '/sdcard/';
+        let screenshotData = null;
+
+        function log(msg, type = 'info') {
+            const content = document.getElementById('logContent');
+            const time = new Date().toLocaleTimeString('pt-BR');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="time">[${time}]</span> <span class="msg">${msg}</span>`;
+            content.appendChild(entry);
+            content.scrollTop = content.scrollHeight;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch(`${API}/api/status`);
+                const data = await res.json();
+                
+                const statusDot = document.getElementById('statusDot');
+                const deviceStatus = document.getElementById('deviceStatus');
+                
+                if (data.online) {
+                    statusDot.classList.add('online');
+                    deviceStatus.textContent = 'DEVICE: ONLINE';
+                    deviceStatus.style.color = 'var(--accent2)';
+                    
+                    document.getElementById('deviceModel').textContent = `${data.brand} ${data.model}`;
+                    document.getElementById('deviceAndroid').textContent = `Android ${data.android}`;
+                    
+                    document.getElementById('batteryLevel').textContent = `${data.battery.level}%`;
+                    document.getElementById('batteryStatus').textContent = data.battery.status;
+                    document.getElementById('batteryTemp').textContent = data.battery.temperature;
+                    
+                    const batteryProgress = document.getElementById('batteryProgress');
+                    batteryProgress.style.width = `${data.battery.level}%`;
+                    batteryProgress.className = 'progress-fill' + 
+                        (data.battery.level < 20 ? ' danger' : data.battery.level < 50 ? ' warning' : '');
+                    
+                    document.getElementById('storageTotal').textContent = data.storage.total;
+                    document.getElementById('storageUsed').textContent = data.storage.used;
+                    document.getElementById('storageFree').textContent = data.storage.free;
+                    document.getElementById('connectionType').textContent = data.connection;
+                    
+                    document.getElementById('deviceIp').textContent = data.ip;
+                    document.getElementById('connType2').textContent = data.connection;
+                    
+                    log('Status atualizado - ' + data.model);
+                } else {
+                    statusDot.classList.remove('online');
+                    deviceStatus.textContent = 'DEVICE: OFFLINE';
+                    deviceStatus.style.color = 'var(--red)';
+                    log('Dispositivo offline', 'error');
+                }
+            } catch (e) {
+                log('Erro ao buscar status: ' + e.message, 'error');
+            }
+        }
+
+        async function takeScreenshot() {
+            showToast('Capturando screenshot...');
+            log('Solicitando screenshot...');
+            
+            try {
+                const res = await fetch(`${API}/api/screenshot`);
+                const data = await res.json();
+                
+                if (data.success) {
+                    screenshotData = data;
+                    document.getElementById('screenshotImg').src = data.image;
+                    document.getElementById('screenshotPreview').classList.add('active');
+                    log('Screenshot capturado com sucesso');
+                    showToast('Screenshot capturado!');
+                }
+            } catch (e) {
+                log('Erro ao capturar screenshot: ' + e.message, 'error');
+                showToast('Erro ao capturar screenshot');
+            }
+        }
+
+        function closeScreenshot() {
+            document.getElementById('screenshotPreview').classList.remove('active');
+        }
+
+        function downloadScreenshot() {
+            if (!screenshotData) return;
+            const a = document.createElement('a');
+            a.href = screenshotData.image;
+            a.download = screenshotData.filename;
+            a.click();
+            closeScreenshot();
+        }
+
+        async function wakeDevice() {
+            await fetch(`${API}/api/power/wake`, { method: 'POST' });
+            log('Tela ligada');
+            showToast('Tela ligada');
+        }
+
+        async function sleepDevice() {
+            await fetch(`${API}/api/power/sleep`, { method: 'POST' });
+            log('Tela desligada');
+            showToast('Tela desligada');
+        }
+
+        async function setVolume(vol) {
+            await fetch(`${API}/api/audio/volume`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ volume: parseInt(vol) })
+            });
+            log(`Volume alterado para ${vol}`);
+        }
+
+        function updateVolumeLabel(vol) {
+            document.getElementById('volumeLabel').textContent = vol;
+        }
+
+        async function toggleMute() {
+            await fetch(`${API}/api/audio/mute`, { method: 'POST' });
+            log('Mute alternado');
+            showToast('Mute alternado');
+        }
+
+        async function openFiles() {
+            const panel = document.getElementById('filesPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            if (panel.style.display === 'block') {
+                navigateFiles(currentPath);
+            }
+        }
+
+        async function navigateFiles(path) {
+            currentPath = path;
+            const list = document.getElementById('filesList');
+            list.innerHTML = '<div class="loading">Carregando</div>';
+            
+            try {
+                const res = await fetch(`${API}/api/files?path=${encodeURIComponent(path)}`);
+                const data = await res.json();
+                
+                list.innerHTML = '';
+                
+                if (path !== '/') {
+                    const parent = path.split('/').slice(0, -2).join('/') || '/';
+                    const backItem = document.createElement('div');
+                    backItem.className = 'file-item';
+                    backItem.innerHTML = `
+                        <span class="icon">⬆️</span>
+                        <span class="name">..</span>
+                    `;
+                    backItem.onclick = () => navigateFiles(parent);
+                    list.appendChild(backItem);
+                }
+                
+                data.files.forEach(file => {
+                    const item = document.createElement('div');
+                    item.className = 'file-item';
+                    item.innerHTML = `
+                        <span class="icon">${file.is_dir ? '📁' : '📄'}</span>
+                        <span class="name">${file.name}</span>
+                        <span class="size">${file.size}</span>
+                    `;
+                    
+                    if (file.is_dir) {
+                        item.onclick = () => {
+                            const newPath = path.endsWith('/') ? path + file.name : path + '/' + file.name;
+                            navigateFiles(newPath);
+                        };
+                    } else {
+                        item.onclick = () => pullFile(path + file.name);
+                    }
+                    
+                    list.appendChild(item);
+                });
+                
+                log(`Navegando: ${path}`);
+            } catch (e) {
+                list.innerHTML = '<div class="loading">Erro ao carregar</div>';
+            }
+        }
+
+        async function pullFile(filepath) {
+            showToast('Copiando arquivo...');
+            try {
+                const res = await fetch(`${API}/api/files/pull?filepath=${encodeURIComponent(filepath)}`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.success) {
+                    log(`Arquivo copiado: ${filepath}`);
+                    showToast('Arquivo copiado com sucesso!');
+                }
+            } catch (e) {
+                log('Erro ao copiar arquivo: ' + e.message, 'error');
+                showToast('Erro ao copiar arquivo');
+            }
+        }
+
+        async function activatePanic() {
+            if (!confirm('Ativar PANIC MODE? Isso apenas cria animações visuais no Ubuntu.')) {
+                return;
+            }
+            
+            showToast('PANIC MODE ATIVADO!');
+            log('🚨 PANIC MODE ATIVADO');
+            
+            try {
+                const res = await fetch(`${API}/api/panic`, { method: 'POST' });
+                const data = await res.json();
+                log(data.message);
+            } catch (e) {
+                log('Erro ao ativar Panic Mode: ' + e.message, 'error');
+            }
+        }
+
+        // Auto-update
+        setInterval(fetchStatus, 5000);
+        fetchStatus();
+        
+        log('Sistema inicializado');
+        log('Aguardando conexão do dispositivo...');
+    </script>
+</body>
+</html>
